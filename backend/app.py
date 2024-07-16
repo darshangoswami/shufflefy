@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, session
+import time
+from flask import Flask, request, jsonify, session, redirect
 from flask_cors import CORS
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -6,7 +7,9 @@ from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_UR
 from shuffle import fisher_yates_shuffle
 
 app = Flask(__name__)
-CORS(app)
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True  # Use this in production with HTTPS
+CORS(app, supports_credentials=True)
 app.secret_key = 'your_secret_key_here'
 
 @app.route('/login')
@@ -22,7 +25,7 @@ def callback():
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
-    return "Login successful!"
+    return redirect('http://127.0.0.1:5173/')
 
 @app.route('/playlists')
 def get_playlists():
@@ -65,6 +68,15 @@ def get_token():
 
     token_valid = True
     return token_info, token_valid
+
+@app.route('/check-login')
+def check_login():
+    token_info = session.get('token_info', None)
+    if token_info:
+        return jsonify({'logged_in': True})
+    else:
+        return jsonify({'logged_in': False})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
