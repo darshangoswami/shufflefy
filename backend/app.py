@@ -12,9 +12,11 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Use this in production with HTTPS
 CORS(app, supports_credentials=True)
 app.secret_key = 'your_secret_key_here'
 
+scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming'
+
 @app.route('/login')
 def login():
-    sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope='playlist-read-private')
+    sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
     auth_url = sp_oauth.get_authorize_url()
     return jsonify({"auth_url": auth_url})
 
@@ -38,18 +40,48 @@ def get_playlists():
     playlists = sp.current_user_playlists()
     return jsonify(playlists)
 
-@app.route('/shuffle/<playlist_id>')
-def shuffle_playlist(playlist_id):
+@app.route('/playlist/<playlist_id>')
+def get_playlist(playlist_id):
     session['token_info'], authorized = get_token()
-    session.modified = True
     if not authorized:
         return jsonify({"error": "Not authorized"})
     
     sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
     tracks = sp.playlist_tracks(playlist_id)
-    track_list = [item['track'] for item in tracks['items']]
-    shuffled_tracks = fisher_yates_shuffle(track_list)
-    return jsonify(shuffled_tracks)
+    track_list = [{'id': item['track']['id'], 'name': item['track']['name'], 'artists': [artist['name'] for artist in item['track']['artists']]} for item in tracks['items']]
+    return jsonify(track_list)
+
+@app.route('/create-shuffled-playlist/<playlist_id>')
+def create_shuffled_playlist(playlist_id):
+    session['token_info'], authorized = get_token()
+    if not authorized:
+        return jsonify({"error": "Not authorized"})
+    
+    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    
+    # Get original playlist details
+    original_playlist = sp.playlist(playlist_id)
+    
+    # Create a new playlist
+    user_id = sp.me()['id']
+    new_playlist = sp.user_playlist_create(user_id, f"Shuffled: {original_playlist['name']}")
+    
+    # Get all tracks from the original playlist
+    tracks = []
+    results = sp.playlist_tracks(playlist_id)
+    tracks.extend(results['items'])
+    while results['next']:
+        results = sp.next(results)
+        tracks.extend(results['items'])
+    
+    # Shuffle the tracks
+    shuffled_tracks = fisher_yates_shuffle(tracks)
+    
+    # Add tracks to the new playlist
+    track_uris = [item['track']['uri'] for item in shuffled_tracks]
+    sp.user_playlist_add_tracks(user_id, new_playlist['id'], track_uris)
+    
+    return jsonify({"new_playlist_id": new_playlist['id']})
 
 def get_token():
     token_valid = False
