@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
+axios.defaults.withCredentials = true;
+
 function ShuffledPlaylist() {
   const [tracks, setTracks] = useState([]);
   const [isShuffled, setIsShuffled] = useState(false);

@@ -1,3 +1,4 @@
+from functools import wraps
 import time
 from flask import Flask, request, jsonify, session, redirect
 from flask_cors import CORS
@@ -9,8 +10,19 @@ from shuffle import fisher_yates_shuffle
 app = Flask(__name__)
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True  # Use this in production with HTTPS
-CORS(app, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": ["http://127.0.0.1:5173", "http://localhost:5173"], "supports_credentials": True}})
 app.secret_key = 'your_secret_key_here'
+
+def add_cors_headers(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        response = f(*args, **kwargs)
+        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        return response
+    return decorated_function
 
 scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming'
 
@@ -20,9 +32,14 @@ def login():
     auth_url = sp_oauth.get_authorize_url()
     return jsonify({"auth_url": auth_url})
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return jsonify({"message": "Logged out successfully"}), 200
+
 @app.route('/callback')
 def callback():
-    sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope='playlist-read-private')
+    sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
     session.clear()
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
@@ -41,6 +58,7 @@ def get_playlists():
     return jsonify(playlists)
 
 @app.route('/playlist/<playlist_id>')
+@add_cors_headers
 def get_playlist(playlist_id):
     session['token_info'], authorized = get_token()
     if not authorized:
@@ -52,6 +70,7 @@ def get_playlist(playlist_id):
     return jsonify(track_list)
 
 @app.route('/create-shuffled-playlist/<playlist_id>')
+@add_cors_headers
 def create_shuffled_playlist(playlist_id):
     session['token_info'], authorized = get_token()
     if not authorized:
@@ -95,7 +114,7 @@ def get_token():
     is_token_expired = session.get('token_info').get('expires_at') - now < 60
 
     if (is_token_expired):
-        sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope='playlist-read-private')
+        sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
         token_info = sp_oauth.refresh_access_token(session.get('token_info').get('refresh_token'))
 
     token_valid = True

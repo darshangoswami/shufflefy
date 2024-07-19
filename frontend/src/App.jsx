@@ -18,7 +18,6 @@ function App() {
           withCredentials: true,
         });
         setIsLoggedIn(response.data.logged_in);
-        console.log(isLoggedIn);
       } catch (error) {
         console.error("Error checking login status:", error);
       }
@@ -27,6 +26,19 @@ function App() {
     checkLoginStatus();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await axios.get("http://127.0.0.1:5000/logout", {
+        withCredentials: true,
+      });
+      // Handle logout on the client side (e.g., clear local state, redirect)
+      setIsLoggedIn(false);
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   return (
     <Router>
       <div>
@@ -34,6 +46,9 @@ function App() {
           <ul>
             <li>
               <Link to="/">Home</Link>
+            </li>
+            <li>
+              <button onClick={handleLogout}>Logout</button>
             </li>
             {isLoggedIn && (
               <li>
