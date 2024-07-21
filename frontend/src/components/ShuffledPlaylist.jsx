@@ -6,7 +6,6 @@ axios.defaults.withCredentials = true;
 
 function ShuffledPlaylist() {
   const [tracks, setTracks] = useState([]);
-  const [isShuffled, setIsShuffled] = useState(false);
   const { playlistId } = useParams();
 
   useEffect(() => {
@@ -19,7 +18,6 @@ function ShuffledPlaylist() {
         `http://127.0.0.1:5000/playlist/${playlistId}`
       );
       setTracks(response.data);
-      setIsShuffled(false);
     } catch (error) {
       console.error("Error fetching playlist:", error);
     }
@@ -32,7 +30,6 @@ function ShuffledPlaylist() {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     setTracks(shuffled);
-    setIsShuffled(true);
   };
 
   const createShuffledPlaylist = async () => {
