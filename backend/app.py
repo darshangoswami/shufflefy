@@ -1,11 +1,12 @@
-from functools import wraps
-import time
 from flask import Flask, request, jsonify, session, redirect
 from flask_cors import CORS
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI
 from shuffle import fisher_yates_shuffle
+from spotipy.exceptions import SpotifyException
+from functools import wraps
+import time
 
 app = Flask(__name__)
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
@@ -74,33 +75,46 @@ def get_playlist(playlist_id):
 def create_shuffled_playlist(playlist_id):
     session['token_info'], authorized = get_token()
     if not authorized:
-        return jsonify({"error": "Not authorized"})
+        return jsonify({"error": "Not authorized"}), 401
     
     sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
     
-    # Get original playlist details
-    original_playlist = sp.playlist(playlist_id)
-    
-    # Create a new playlist
-    user_id = sp.me()['id']
-    new_playlist = sp.user_playlist_create(user_id, f"Shuffled: {original_playlist['name']}")
-    
-    # Get all tracks from the original playlist
-    tracks = []
-    results = sp.playlist_tracks(playlist_id)
-    tracks.extend(results['items'])
-    while results['next']:
-        results = sp.next(results)
+    try:
+        # Get original playlist details
+        original_playlist = sp.playlist(playlist_id)
+        
+        # Create a new playlist
+        user_id = sp.me()['id']
+        new_playlist = sp.user_playlist_create(user_id, f"Shuffled: {original_playlist['name']}")
+        
+        # Get all tracks from the original playlist
+        tracks = []
+        results = sp.playlist_tracks(playlist_id)
         tracks.extend(results['items'])
-    
-    # Shuffle the tracks
-    shuffled_tracks = fisher_yates_shuffle(tracks)
-    
-    # Add tracks to the new playlist
-    track_uris = [item['track']['uri'] for item in shuffled_tracks]
-    sp.user_playlist_add_tracks(user_id, new_playlist['id'], track_uris)
-    
-    return jsonify({"new_playlist_id": new_playlist['id']})
+        while results['next']:
+            results = sp.next(results)
+            tracks.extend(results['items'])
+        
+        # Shuffle the tracks
+        shuffled_tracks = fisher_yates_shuffle(tracks)
+        
+        # Add tracks to the new playlist in batches
+        track_uris = [item['track']['uri'] for item in shuffled_tracks if item['track']['uri']]
+        batch_size = 100  # Spotify allows up to 100 tracks per request
+        for i in range(0, len(track_uris), batch_size):
+            batch = track_uris[i:i+batch_size]
+            sp.user_playlist_add_tracks(user_id, new_playlist['id'], batch)
+            time.sleep(1)  # Add a small delay to avoid rate limiting
+        
+        return jsonify({"new_playlist_id": new_playlist['id']})
+    except SpotifyException as e:
+        if e.http_status == 403 and 'Insufficient client scope' in str(e):
+            # Token might be expired or missing scopes, clear the session to force re-authentication
+            session.clear()
+            return jsonify({"error": "Insufficient permissions. Please log in again."}), 403
+        else:
+            # Handle other Spotify API errors
+            return jsonify({"error": str(e)}), e.http_status
 
 def get_token():
     token_valid = False
