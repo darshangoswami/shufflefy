@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session, redirect
+from flask import Flask, make_response, request, jsonify, session, redirect
 from flask_cors import CORS
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -17,7 +17,7 @@ app.secret_key = 'your_secret_key_here'
 def add_cors_headers(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        response = f(*args, **kwargs)
+        response = make_response(f(*args, **kwargs))
         response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
         response.headers.add('Access-Control-Allow-Credentials', 'true')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
@@ -25,7 +25,7 @@ def add_cors_headers(f):
         return response
     return decorated_function
 
-scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming'
+scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state'
 
 @app.route('/login')
 def login():
@@ -115,6 +115,49 @@ def create_shuffled_playlist(playlist_id):
         else:
             # Handle other Spotify API errors
             return jsonify({"error": str(e)}), e.http_status
+        
+@app.route('/shuffle-current-queue')
+@add_cors_headers
+def shuffle_current_queue():
+    session['token_info'], authorized = get_token()
+    if not authorized:
+        return jsonify({"error": "Not authorized"}), 401
+    
+    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    
+    try:
+        # Get the user's current playback state
+        playback = sp.current_playback()
+        if not playback:
+            return jsonify({"error": "No active playback found"}), 404
+        
+        # Collect all tracks in the queue
+        all_tracks = []
+        while True:
+            queue = sp.queue()
+            queue_tracks = queue['queue']
+            all_tracks.extend(queue_tracks)
+            
+            # If we got less than 20 tracks, we've reached the end of the queue
+            if len(queue_tracks) < 20:
+                break
+            
+            # Skip the tracks we've just retrieved
+            for _ in range(len(queue_tracks)):
+                sp.next_track()
+                time.sleep(0.1)  # Small delay to avoid rate limiting
+        
+        # Shuffle the queue
+        shuffled_queue = fisher_yates_shuffle(queue_tracks)
+        print(len(shuffled_queue))
+        
+        for track in shuffled_queue:
+            sp.add_to_queue(track['uri'])
+            time.sleep(0.1)  # Small delay to avoid rate limiting
+        
+        return jsonify({"message": "Queue shuffled successfully shuffled {len(shuffled_tracks)} tracks)"}), 200
+    except SpotifyException as e:
+        return jsonify({"error": str(e)}), e.http_status
 
 def get_token():
     token_valid = False

@@ -4,6 +4,7 @@ import axios from "axios";
 import Login from "./components/Login";
 import Playlists from "./components/Playlists";
 import ShuffledPlaylist from "./components/ShuffledPlaylist";
+import ShuffleQueueButton from "./components/ShuffleQueueButton";
 
 axios.defaults.withCredentials = true;
 
@@ -55,6 +56,9 @@ function App() {
                 <Link to="/playlists">Playlists</Link>
               </li>
             )}
+            <li>
+              <ShuffleQueueButton />
+            </li>
           </ul>
         </nav>
 
