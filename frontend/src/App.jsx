@@ -4,6 +4,7 @@ import axios from "axios";
 import Login from "./components/Login";
 import Playlists from "./components/Playlists";
 import ShuffledPlaylist from "./components/ShuffledPlaylist";
+import fetchPlaylists from "./components/Playlists";
 
 axios.defaults.withCredentials = true;
 
@@ -52,7 +53,9 @@ function App() {
             </li>
             {isLoggedIn && (
               <li>
-                <Link to="/playlists">Playlists</Link>
+                <Link onClick={fetchPlaylists} to="/playlists">
+                  Playlists
+                </Link>
               </li>
             )}
           </ul>

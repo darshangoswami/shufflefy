@@ -6,17 +6,17 @@ function Playlists() {
   const [playlists, setPlaylists] = useState([]);
 
   useEffect(() => {
-    const fetchPlaylists = async () => {
-      try {
-        const response = await axios.get("http://127.0.0.1:5000/playlists");
-        setPlaylists(response.data.items);
-      } catch (error) {
-        console.error("Error fetching playlists:", error);
-      }
-    };
-
     fetchPlaylists();
   }, []);
+
+  const fetchPlaylists = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:5000/playlists");
+      setPlaylists(response.data.items);
+    } catch (error) {
+      console.error("Error fetching playlists:", error);
+    }
+  };
 
   return (
     <div>
