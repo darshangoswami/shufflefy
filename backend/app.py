@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, session, redirect
 from flask_cors import CORS
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI
+from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, APP_SECRET_KEY
 from shuffle import fisher_yates_shuffle
 from spotipy.exceptions import SpotifyException
 from functools import wraps
@@ -12,7 +12,7 @@ app = Flask(__name__)
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True  # Use this in production with HTTPS
 CORS(app, resources={r"/*": {"origins": ["http://127.0.0.1:5173", "http://localhost:5173"], "supports_credentials": True}})
-app.secret_key = 'your_secret_key_here'
+app.secret_key = APP_SECRET_KEY
 
 def add_cors_headers(f):
     @wraps(f)
