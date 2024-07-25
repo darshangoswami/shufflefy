@@ -131,31 +131,46 @@ def shuffle_current_queue():
         if not playback:
             return jsonify({"error": "No active playback found"}), 404
         
-        # Collect all tracks in the queue
-        all_tracks = []
-        while True:
+        # Get the current queue
+        if playback['context']['type'] == "playlist":
+            playlist_id = playback['context']['uri'].split(':')[-1]
+            
+            # Fetch all tracks from the playlist
+            tracks = []
+            results = sp.playlist_tracks(playlist_id)
+            tracks.extend(results['items'])
+            while results['next']:
+                results = sp.next(results)
+                tracks.extend(results['items'])
+            
+            queue_tracks = [item['track'] for item in tracks if item['track'] is not None]
+        else:
             queue = sp.queue()
             queue_tracks = queue['queue']
-            all_tracks.extend(queue_tracks)
-            
-            # If we got less than 20 tracks, we've reached the end of the queue
-            if len(queue_tracks) < 20:
-                break
-            
-            # Skip the tracks we've just retrieved
-            for _ in range(len(queue_tracks)):
-                sp.next_track()
-                time.sleep(0.1)  # Small delay to avoid rate limiting
         
         # Shuffle the queue
         shuffled_queue = fisher_yates_shuffle(queue_tracks)
-        print(len(shuffled_queue))
         
+        # Clear the current queue (if possible) and add shuffled tracks
+        # Note: Spotify API doesn't provide a direct method to clear the queue
+        track_add_count = 0
         for track in shuffled_queue:
             sp.add_to_queue(track['uri'])
-            time.sleep(0.1)  # Small delay to avoid rate limiting
-        
-        return jsonify({"message": "Queue shuffled successfully shuffled {len(shuffled_tracks)} tracks)"}), 200
+            track_add_count += 1
+
+        unique_tracks = list(set(track['id'] for track in queue_tracks))
+        total_tracks = len(queue_tracks)
+        unique_count = len(unique_tracks)
+        context = playback["context"]
+
+        return jsonify({
+            "context": context,
+            "message": "Queue shuffled successfully",
+            "total_tracks": total_tracks,
+            "unique_tracks": unique_count,
+            "duplicate_count": total_tracks - unique_count,
+            "tracks_added": track_add_count
+        }), 200
     except SpotifyException as e:
         return jsonify({"error": str(e)}), e.http_status
 

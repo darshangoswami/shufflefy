@@ -12,6 +12,7 @@ function ShuffleQueueButton() {
         { withCredentials: true }
       );
       alert(response.data.message);
+      console.log(response.data);
     } catch (error) {
       if (error.response) {
         alert(`Error: ${error.response.data.error}`);
