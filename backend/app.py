@@ -25,7 +25,7 @@ def add_cors_headers(f):
         return response
     return decorated_function
 
-scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state'
+scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-library-read'
 
 @app.route('/login')
 def login():
@@ -129,7 +129,9 @@ def shuffle_current_queue():
             
             # Fetch all tracks from the playlist
             tracks = get_tracks(playlist_id)
-            
+            queue_tracks = [item['track'] for item in tracks if item['track'] is not None]
+        elif playback['context']['type'] == "collection":
+            tracks = get_tracks(0)
             queue_tracks = [item['track'] for item in tracks if item['track'] is not None]
         else:
             queue = sp.queue()
@@ -187,7 +189,10 @@ def get_tracks(playlist_id):
     sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
 
     tracks = []
-    results = sp.playlist_tracks(playlist_id)
+    if playlist_id == 0:
+        results = sp.current_user_saved_tracks(limit=50)
+    else:
+        results = sp.playlist_tracks(playlist_id)
     tracks.extend(results['items'])
     while results['next']:
         results = sp.next(results)
