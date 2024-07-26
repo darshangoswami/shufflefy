@@ -124,28 +124,29 @@ def shuffle_current_queue():
             return jsonify({"error": "No active playback found"}), 404
         
         # Get the current queue
-        if playback['context']['type'] == "playlist":
+        if not playback['context']:
+            queue = sp.queue()
+            queue_tracks = queue['queue']
+
+        elif playback['context']['type'] == "playlist":
             playlist_id = playback['context']['uri'].split(':')[-1]
-            
             # Fetch all tracks from the playlist
             tracks = get_tracks(playlist_id)
             queue_tracks = [item['track'] for item in tracks if item['track'] is not None]
+
         elif playback['context']['type'] == "collection":
             tracks = get_tracks(0)
             queue_tracks = [item['track'] for item in tracks if item['track'] is not None]
-        else:
-            queue = sp.queue()
-            queue_tracks = queue['queue']
         
         # Shuffle the queue
         shuffled_queue = fisher_yates_shuffle(queue_tracks)
         
-        # Clear the current queue (if possible) and add shuffled tracks
-        # Note: Spotify API doesn't provide a direct method to clear the queue
         track_add_count = 0
         for track in shuffled_queue:
             sp.add_to_queue(track['uri'])
             track_add_count += 1
+            if track_add_count == 81 or track_add_count == len(shuffled_queue):
+                break
 
         unique_tracks = list(set(track['id'] for track in queue_tracks))
         total_tracks = len(queue_tracks)
