@@ -61,13 +61,10 @@ def get_playlists():
 @app.route('/playlist/<playlist_id>')
 @add_cors_headers
 def get_playlist(playlist_id):
-    session['token_info'], authorized = get_token()
-    if not authorized:
-        return jsonify({"error": "Not authorized"})
-    
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
-    tracks = sp.playlist_tracks(playlist_id)
-    track_list = [{'id': item['track']['id'], 'name': item['track']['name'], 'artists': [artist['name'] for artist in item['track']['artists']]} for item in tracks['items']]
+    tracks = get_tracks(playlist_id)
+    track_list = [{'id': item['track']['id'], 'name': item['track']['name'], 'artists': [artist['name'] for artist in item['track']['artists']]} for item in tracks]
+    print(f"Number of tracks in the playlist: {len(tracks)}")
+
     return jsonify(track_list)
 
 @app.route('/create-shuffled-playlist/<playlist_id>')
@@ -88,12 +85,7 @@ def create_shuffled_playlist(playlist_id):
         new_playlist = sp.user_playlist_create(user_id, f"Shuffled: {original_playlist['name']}")
         
         # Get all tracks from the original playlist
-        tracks = []
-        results = sp.playlist_tracks(playlist_id)
-        tracks.extend(results['items'])
-        while results['next']:
-            results = sp.next(results)
-            tracks.extend(results['items'])
+        tracks = get_tracks(playlist_id)
         
         # Shuffle the tracks
         shuffled_tracks = fisher_yates_shuffle(tracks)
@@ -136,12 +128,7 @@ def shuffle_current_queue():
             playlist_id = playback['context']['uri'].split(':')[-1]
             
             # Fetch all tracks from the playlist
-            tracks = []
-            results = sp.playlist_tracks(playlist_id)
-            tracks.extend(results['items'])
-            while results['next']:
-                results = sp.next(results)
-                tracks.extend(results['items'])
+            tracks = get_tracks(playlist_id)
             
             queue_tracks = [item['track'] for item in tracks if item['track'] is not None]
         else:
@@ -191,6 +178,22 @@ def get_token():
 
     token_valid = True
     return token_info, token_valid
+
+def get_tracks(playlist_id):
+    session['token_info'], authorized = get_token()
+    if not authorized:
+        return jsonify({"error": "Not authorized"}), 401
+    
+    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+
+    tracks = []
+    results = sp.playlist_tracks(playlist_id)
+    tracks.extend(results['items'])
+    while results['next']:
+        results = sp.next(results)
+        tracks.extend(results['items'])
+
+    return tracks
 
 @app.route('/check-login')
 def check_login():
