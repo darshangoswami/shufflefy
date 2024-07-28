@@ -6,12 +6,12 @@ Shufflefy is a web application that enhances the Spotify experience by providing
 
 - Improved shuffling algorithm for Spotify playlists
 - Create new shuffled playlists from existing ones
+- Shuffle queues on a remote device
+- Integration with Spotify Web API
 
 ### Upcoming Features
 
-- Shuffle queues on remote device
 - Web-based player for shuffled playlists
-- Integration with Spotify Web API and Web Playback SDK
 
 ## Tech Stack
 
