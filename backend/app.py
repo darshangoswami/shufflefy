@@ -58,14 +58,6 @@ def get_playlists():
     playlists = sp.current_user_playlists()
     return jsonify(playlists)
 
-@app.route('/playlist/<playlist_id>')
-@add_cors_headers
-def get_playlist(playlist_id):
-    tracks = get_tracks(playlist_id)
-    track_list = [{'id': item['track']['id'], 'name': item['track']['name'], 'artists': [artist['name'] for artist in item['track']['artists']]} for item in tracks]
-    print(f"Number of tracks in the playlist: {len(tracks)}")
-
-    return jsonify(track_list)
 
 @app.route('/create-shuffled-playlist/<playlist_id>')
 @add_cors_headers
@@ -163,6 +155,44 @@ def shuffle_current_queue():
         }), 200
     except SpotifyException as e:
         return jsonify({"error": str(e)}), e.http_status
+    
+@app.route('/play-with-shuffle/<playlist_id>')
+@add_cors_headers
+def play_with_shuffle(playlist_id):
+    session['token_info'], authorized = get_token()
+    if not authorized:
+        return jsonify({"error": "Not authorized"}), 401
+    
+    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+
+    try:
+        tracks = get_tracks(playlist_id)
+        queue_tracks = [item['track'] for item in tracks if item['track'] is not None]
+
+        shuffled_queue = fisher_yates_shuffle(queue_tracks)
+
+        track_add_count = 0
+        for track in shuffled_queue:
+            sp.add_to_queue(track['uri'])
+            track_add_count += 1
+            if track_add_count == 81 or track_add_count == len(shuffled_queue):
+                break
+        
+        unique_tracks = list(set(track['id'] for track in queue_tracks))
+        total_tracks = len(queue_tracks)
+        unique_count = len(unique_tracks)
+
+        return jsonify({
+            "message": "Playing with Shufflefy!",
+            "total_tracks": total_tracks,
+            "unique_tracks": unique_count,
+            "duplicate_count": total_tracks - unique_count,
+            "tracks_added": track_add_count
+        }), 200
+    
+    except SpotifyException as e:
+        return jsonify({"error": str(e)}), e.http_status
+        
 
 def get_token():
     token_valid = False
