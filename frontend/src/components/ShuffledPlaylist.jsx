@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 
 axios.defaults.withCredentials = true;
 
@@ -8,6 +8,8 @@ function ShuffledPlaylist() {
   const [tracks, setTracks] = useState([]);
   const [isShuffling, setIsShuffling] = useState(false);
   const { playlistId } = useParams();
+  const location = useLocation();
+  const playlistName = location.state?.playlistName || "Unknown Playlist";
 
   useEffect(() => {
     fetchPlaylist();
@@ -60,7 +62,7 @@ function ShuffledPlaylist() {
 
   return (
     <div>
-      <h1>Playlist</h1>
+      <h1>Playlist - {playlistName}</h1>
       <ul>
         <h3>Before Playing with Shufflefy:</h3>
         <li>

@@ -24,7 +24,12 @@ function Playlists() {
       <ul>
         {playlists.map((playlist) => (
           <li key={playlist.id}>
-            <Link to={`/shuffle/${playlist.id}`}>{playlist.name}</Link>
+            <Link
+              to={`/shuffle/${playlist.id}`}
+              state={{ playlistName: playlist.name }}
+            >
+              {playlist.name}
+            </Link>
           </li>
         ))}
       </ul>
