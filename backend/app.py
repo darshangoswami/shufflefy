@@ -177,6 +177,8 @@ def play_with_shuffle(playlist_id):
             track_add_count += 1
             if track_add_count == 81 or track_add_count == len(shuffled_queue):
                 break
+
+        sp.next_track()
         
         unique_tracks = list(set(track['id'] for track in queue_tracks))
         total_tracks = len(queue_tracks)
