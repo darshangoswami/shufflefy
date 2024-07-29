@@ -58,6 +58,14 @@ def get_playlists():
     playlists = sp.current_user_playlists()
     return jsonify(playlists)
 
+@app.route('/playlist/<playlist_id>')
+@add_cors_headers
+def get_playlist(playlist_id):
+    tracks = get_tracks(playlist_id)
+    track_list = [{'id': item['track']['id'], 'name': item['track']['name'], 'artists': [artist['name'] for artist in item['track']['artists']]} for item in tracks]
+    print(f"Number of tracks in the playlist: {len(tracks)}")
+
+    return jsonify(track_list)
 
 @app.route('/create-shuffled-playlist/<playlist_id>')
 @add_cors_headers

@@ -1,12 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
 axios.defaults.withCredentials = true;
 
 function ShuffledPlaylist() {
+  const [tracks, setTracks] = useState([]);
   const [isShuffling, setIsShuffling] = useState(false);
   const { playlistId } = useParams();
+
+  useEffect(() => {
+    fetchPlaylist();
+  }, [playlistId]);
+
+  const fetchPlaylist = async () => {
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:5000/playlist/${playlistId}`
+      );
+      setTracks(response.data);
+    } catch (error) {
+      console.error("Error fetching playlist:", error);
+    }
+  };
 
   const playWithShuffle = async () => {
     setIsShuffling(true);
@@ -45,10 +61,6 @@ function ShuffledPlaylist() {
   return (
     <div>
       <h1>Playlist</h1>
-      <button onClick={playWithShuffle} disabled={isShuffling}>
-        {isShuffling ? "Shuffling..." : "Play With Shufflefy"}
-      </button>
-      <button onClick={createShuffledPlaylist}>Create Shuffled Playlist</button>
       <ul>
         <h3>Before Playing with Shufflefy:</h3>
         <li>
@@ -57,6 +69,19 @@ function ShuffledPlaylist() {
         <li>
           <p>2. Clear your queue before shuffling.</p>
         </li>
+      </ul>
+
+      <button onClick={playWithShuffle} disabled={isShuffling}>
+        {isShuffling ? "Shuffling..." : "Play With Shufflefy"}
+      </button>
+      <button onClick={createShuffledPlaylist}>Create Shuffled Playlist</button>
+
+      <ul>
+        {tracks.map((track) => (
+          <li key={track.id}>
+            {track.name} - {track.artists.join(", ")}
+          </li>
+        ))}
       </ul>
     </div>
   );
