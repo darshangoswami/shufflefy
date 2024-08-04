@@ -141,17 +141,16 @@ def shuffle_current_queue():
         # Shuffle the queue
         shuffled_queue = fisher_yates_shuffle(queue_tracks)
         
-        track_add_count = 0
-        for track in shuffled_queue:
-            sp.add_to_queue(track['uri'])
-            track_add_count += 1
-            if track_add_count == 81 or track_add_count == len(shuffled_queue):
-                break
+        track_uris = [track['uri'] for track in shuffled_queue[:81]]
+
+        # Start playback with the shuffled tracks
+        sp.start_playback(uris=track_uris)
 
         unique_tracks = list(set(track['id'] for track in queue_tracks))
         total_tracks = len(queue_tracks)
         unique_count = len(unique_tracks)
         context = playback["context"]
+        track_add_count = len(track_uris)
 
         return jsonify({
             "context": context,
@@ -179,18 +178,15 @@ def play_with_shuffle(playlist_id):
 
         shuffled_queue = fisher_yates_shuffle(queue_tracks)
 
-        track_add_count = 0
-        for track in shuffled_queue:
-            sp.add_to_queue(track['uri'])
-            track_add_count += 1
-            if track_add_count == 81 or track_add_count == len(shuffled_queue):
-                break
+        track_uris = [track['uri'] for track in shuffled_queue[:81]]
 
-        sp.next_track()
+        # Start playback with the shuffled tracks
+        sp.start_playback(uris=track_uris)
         
         unique_tracks = list(set(track['id'] for track in queue_tracks))
         total_tracks = len(queue_tracks)
         unique_count = len(unique_tracks)
+        track_add_count = len(track_uris)
 
         return jsonify({
             "message": "Playing with Shufflefy!",
