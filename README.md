@@ -35,8 +35,8 @@ Shufflefy is a web application that enhances the Spotify experience by providing
 1. Clone the repository:
 
 ```
-git clone https://github.com/yourusername/spotify-shuffler.git
-cd spotify-shuffler
+git clone https://github.com/darshangoswami/shufflefy.git
+cd shufflefy
 ```
 
 2. Set up a virtual environment:
