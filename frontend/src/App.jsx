@@ -45,7 +45,7 @@ function App() {
 
   return (
     <Router>
-      <div className="flex flex-col">
+      <div className="flex flex-col w-full max-w-screen-md mx-auto p-5">
         <nav>
           <ul className="flex justify-between">
             <div className="flex gap-2">
@@ -69,8 +69,8 @@ function App() {
                 <ShuffleQueueButton />
               </li>
             </div>
-            <div className="flex">
-              <li className="flex justify-end">
+            <div className="flex justify-end">
+              <li>
                 <Button variant="destructive" onClick={handleLogout}>
                   Logout
                 </Button>
