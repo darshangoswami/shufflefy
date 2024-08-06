@@ -45,33 +45,37 @@ function App() {
 
   return (
     <Router>
-      <div>
+      <div className="flex flex-col">
         <nav>
-          <ul>
-            <li>
-              <Link className={buttonVariants({ variant: "primary" })} to="/">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Button variant="destructive" onClick={handleLogout}>
-                Logout
-              </Button>
-            </li>
-            {isLoggedIn && (
+          <ul className="flex justify-between">
+            <div className="flex gap-2">
               <li>
-                <Link
-                  className={buttonVariants({ variant: "outline" })}
-                  onClick={fetchPlaylists}
-                  to="/playlists"
-                >
-                  Playlists
+                <Link className={buttonVariants({ variant: "primary" })} to="/">
+                  Shufflefy
                 </Link>
               </li>
-            )}
-            <li>
-              <ShuffleQueueButton />
-            </li>
+              {isLoggedIn && (
+                <li>
+                  <Link
+                    className={buttonVariants({ variant: "outline" })}
+                    onClick={fetchPlaylists}
+                    to="/playlists"
+                  >
+                    Playlists
+                  </Link>
+                </li>
+              )}
+              <li>
+                <ShuffleQueueButton />
+              </li>
+            </div>
+            <div className="flex">
+              <li className="flex justify-end">
+                <Button variant="destructive" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </li>
+            </div>
           </ul>
         </nav>
 
