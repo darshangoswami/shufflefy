@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { Button } from "@/components/ui/button";
 
 function ShuffleQueueButton() {
   const [isShuffling, setIsShuffling] = useState(false);
@@ -26,9 +27,9 @@ function ShuffleQueueButton() {
   };
 
   return (
-    <button onClick={handleShuffleQueue} disabled={isShuffling}>
+    <Button onClick={handleShuffleQueue} disabled={isShuffling}>
       {isShuffling ? "Shuffling..." : "Shuffle Current Queue"}
-    </button>
+    </Button>
   );
 }
 

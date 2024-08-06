@@ -6,6 +6,8 @@ import Playlists from "./components/Playlists";
 import ShuffledPlaylist from "./components/ShuffledPlaylist";
 import fetchPlaylists from "./components/Playlists";
 import ShuffleQueueButton from "./components/ShuffleQueueButton";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 axios.defaults.withCredentials = true;
 
@@ -47,14 +49,22 @@ function App() {
         <nav>
           <ul>
             <li>
-              <Link to="/">Home</Link>
+              <Link className={buttonVariants({ variant: "primary" })} to="/">
+                Home
+              </Link>
             </li>
             <li>
-              <button onClick={handleLogout}>Logout</button>
+              <Button variant="destructive" onClick={handleLogout}>
+                Logout
+              </Button>
             </li>
             {isLoggedIn && (
               <li>
-                <Link onClick={fetchPlaylists} to="/playlists">
+                <Link
+                  className={buttonVariants({ variant: "outline" })}
+                  onClick={fetchPlaylists}
+                  to="/playlists"
+                >
                   Playlists
                 </Link>
               </li>
