@@ -7,7 +7,6 @@ import ShuffledPlaylist from "./components/ShuffledPlaylist";
 import fetchPlaylists from "./components/Playlists";
 import ShuffleQueueButton from "./components/ShuffleQueueButton";
 import { Button } from "@/components/ui/button";
-import { buttonVariants } from "@/components/ui/button";
 
 axios.defaults.withCredentials = true;
 
@@ -46,23 +45,22 @@ function App() {
   return (
     <Router>
       <div className="flex flex-col h-screen justify-center max-w-screen-md mx-auto p-5">
+        <h1 className="flex flex-row justify-center mb-10">
+          <Button asChild>
+            <Link to="/">Shufflefy</Link>
+          </Button>
+        </h1>
         <nav>
           <ul className="flex justify-between">
             <div className="flex gap-2">
-              <li>
-                <Link className={buttonVariants({ variant: "primary" })} to="/">
-                  Shufflefy
-                </Link>
-              </li>
+              <li></li>
               {isLoggedIn && (
                 <li>
-                  <Link
-                    className={buttonVariants({ variant: "outline" })}
-                    onClick={fetchPlaylists}
-                    to="/playlists"
-                  >
-                    Playlists
-                  </Link>
+                  <Button asChild>
+                    <Link onClick={fetchPlaylists} to="/playlists">
+                      Playlists
+                    </Link>
+                  </Button>
                 </li>
               )}
               <li>
