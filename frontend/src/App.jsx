@@ -74,7 +74,7 @@ function App() {
               </div>
               <div className="flex justify-end">
                 <li>
-                  <Button variant="destructive" onClick={handleLogout}>
+                  <Button variant="outline" onClick={handleLogout}>
                     Logout
                   </Button>
                 </li>
