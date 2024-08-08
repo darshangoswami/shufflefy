@@ -45,11 +45,15 @@ function App() {
   return (
     <Router>
       <div className="flex flex-col h-screen justify-center max-w-screen-md mx-auto p-5">
-        <h1 className="flex flex-row justify-center mb-10">
-          <Button asChild>
+        <div className="flex flex-row justify-center mb-10">
+          <Button
+            variant="Link"
+            className="text-4xl hover:text-green-400"
+            asChild
+          >
             <Link to="/">Shufflefy</Link>
           </Button>
-        </h1>
+        </div>
         <nav>
           <ul className="flex justify-between">
             <div className="flex gap-2">
