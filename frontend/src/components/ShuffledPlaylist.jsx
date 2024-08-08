@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useLocation } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 axios.defaults.withCredentials = true;
 
@@ -61,30 +64,32 @@ function ShuffledPlaylist() {
   };
 
   return (
-    <div>
-      <h1>Playlist - {playlistName}</h1>
-      <ul>
-        <h3>Before Playing with Shufflefy:</h3>
-        <li>
-          <p>1. Make sure Spotify is active on the device you want to play.</p>
-        </li>
-        <li>
-          <p>2. Clear your queue before shuffling.</p>
-        </li>
-      </ul>
+    <div className="flex flex-col w-full p-2 h-4/5 justify-center mx-auto mt-5">
+      <h1 className="text-lg text-green-400">Playlist - {playlistName}</h1>
+      <h3 className="mt-4 mb-3">
+        Before Playing with Shufflefy: Make sure Spotify is active on the device
+        you want to play.
+      </h3>
 
-      <button onClick={playWithShuffle} disabled={isShuffling}>
-        {isShuffling ? "Shuffling..." : "Play With Shufflefy"}
-      </button>
-      <button onClick={createShuffledPlaylist}>Create Shuffled Playlist</button>
+      <div className="flex flex-row justify-center mb-2">
+        <Button onClick={playWithShuffle} disabled={isShuffling}>
+          {isShuffling ? "Shuffling..." : "Play With Shufflefy"}
+        </Button>
+        <Button onClick={createShuffledPlaylist} className="ml-2">
+          Create Shuffled Playlist
+        </Button>
+      </div>
 
-      <ul>
-        {tracks.map((track) => (
-          <li key={track.id}>
-            {track.name} - {track.artists.join(", ")}
-          </li>
-        ))}
-      </ul>
+      <ScrollArea className="w-full rounded-md border py-4 px-6 mt-2 shadow-md">
+        <ul>
+          {tracks.map((track) => (
+            <li key={track.id}>
+              {track.name} - {track.artists.join(", ")}
+              <Separator className="my-1" />
+            </li>
+          ))}
+        </ul>
+      </ScrollArea>
     </div>
   );
 }
