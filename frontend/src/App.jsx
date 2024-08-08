@@ -45,7 +45,7 @@ function App() {
 
   return (
     <Router>
-      <div className="flex flex-col w-full max-w-screen-md mx-auto p-5">
+      <div className="flex flex-col h-screen justify-center max-w-screen-md mx-auto p-5">
         <nav>
           <ul className="flex justify-between">
             <div className="flex gap-2">
