@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Button } from "@/components/ui/button";
 
 function Login() {
   const handleLogin = async () => {
@@ -11,9 +12,8 @@ function Login() {
   };
 
   return (
-    <div>
-      <h1>Spotify Shuffler</h1>
-      <button onClick={handleLogin}>Login with Spotify</button>
+    <div className="flex w-full p-2 justify-center">
+      <Button onClick={handleLogin}>Login with Spotify</Button>
     </div>
   );
 }

@@ -54,32 +54,34 @@ function App() {
             <Link to="/">Shufflefy</Link>
           </Button>
         </div>
-        <nav>
-          <ul className="flex justify-between">
-            <div className="flex gap-2">
-              <li></li>
-              {isLoggedIn && (
+        {isLoggedIn && (
+          <nav>
+            <ul className="flex justify-between">
+              <div className="flex gap-2">
+                <li></li>
+                {isLoggedIn && (
+                  <li>
+                    <Button asChild>
+                      <Link onClick={fetchPlaylists} to="/playlists">
+                        Playlists
+                      </Link>
+                    </Button>
+                  </li>
+                )}
                 <li>
-                  <Button asChild>
-                    <Link onClick={fetchPlaylists} to="/playlists">
-                      Playlists
-                    </Link>
+                  <ShuffleQueueButton />
+                </li>
+              </div>
+              <div className="flex justify-end">
+                <li>
+                  <Button variant="destructive" onClick={handleLogout}>
+                    Logout
                   </Button>
                 </li>
-              )}
-              <li>
-                <ShuffleQueueButton />
-              </li>
-            </div>
-            <div className="flex justify-end">
-              <li>
-                <Button variant="destructive" onClick={handleLogout}>
-                  Logout
-                </Button>
-              </li>
-            </div>
-          </ul>
-        </nav>
+              </div>
+            </ul>
+          </nav>
+        )}
 
         <Routes>
           <Route path="/" element={isLoggedIn ? <Playlists /> : <Login />} />
