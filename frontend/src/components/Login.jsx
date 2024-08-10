@@ -12,7 +12,7 @@ function Login() {
   };
 
   return (
-    <div className="flex w-full p-2 justify-center">
+    <div className="flex w-full p-2 mt-2 justify-center">
       <Button onClick={handleLogin}>Login with Spotify</Button>
     </div>
   );

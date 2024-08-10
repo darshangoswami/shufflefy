@@ -21,7 +21,7 @@ function Playlists() {
   };
 
   return (
-    <div className="flex flex-col w-full p-2 h-4/5 justify-center mx-auto mt-5">
+    <div className="flex flex-col w-full p-2 h-2/3 md:h-4/5 justify-center mx-auto mt-5">
       <h1>Your Playlists</h1>
       <ScrollArea className="w-full rounded-md border py-4 px-6 mt-2 shadow-md">
         <ul>

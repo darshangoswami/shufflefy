@@ -64,7 +64,7 @@ function ShuffledPlaylist() {
   };
 
   return (
-    <div className="flex flex-col w-full p-2 h-4/5 justify-center mx-auto mt-5">
+    <div className="flex flex-col w-full p-2 h-2/3 md:h-4/5 justify-center mx-auto mt-5">
       <h1 className="text-lg text-green-400">Playlist - {playlistName}</h1>
       <h3 className="mt-4 mb-3">
         Before Playing with Shufflefy: Make sure Spotify is active on the device

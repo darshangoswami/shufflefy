@@ -45,7 +45,7 @@ function App() {
   return (
     <Router>
       <div className="flex flex-col h-screen justify-center max-w-screen-md mx-auto p-5">
-        <div className="flex flex-row justify-center mb-10">
+        <div className="flex flex-row justify-center mt-5">
           <Button
             variant="Link"
             className="text-4xl hover:text-green-400"
@@ -55,19 +55,16 @@ function App() {
           </Button>
         </div>
         {isLoggedIn && (
-          <nav>
-            <ul className="flex justify-between">
+          <nav className="p-2 mt-5">
+            <ul className="flex justify-between gap-2 flex-wrap">
               <div className="flex gap-2">
-                <li></li>
-                {isLoggedIn && (
-                  <li>
-                    <Button asChild>
-                      <Link onClick={fetchPlaylists} to="/playlists">
-                        Playlists
-                      </Link>
-                    </Button>
-                  </li>
-                )}
+                <li>
+                  <Button asChild>
+                    <Link onClick={fetchPlaylists} to="/playlists">
+                      Playlists
+                    </Link>
+                  </Button>
+                </li>
                 <li>
                   <ShuffleQueueButton />
                 </li>
@@ -88,6 +85,18 @@ function App() {
           <Route path="/playlists" element={<Playlists />} />
           <Route path="/shuffle/:playlistId" element={<ShuffledPlaylist />} />
         </Routes>
+        {isLoggedIn && (
+          <div>
+            <Button asChild variant="link">
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLSeY6QbirsawYMQbXWG1D7ORX82ycpLh1aszm8uKIctL3oTojw/viewform?usp=sf_link"
+                target="_blank"
+              >
+                Feedback
+              </a>
+            </Button>
+          </div>
+        )}
       </div>
     </Router>
   );
