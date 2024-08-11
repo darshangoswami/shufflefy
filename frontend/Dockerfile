@@ -1,5 +1,5 @@
 # Use an official Node runtime as the base image
-FROM node:16-alpine as build
+FROM node:18-alpine as build
 
 # Set the working directory in the container
 WORKDIR /app
