@@ -9,7 +9,7 @@ function ShuffleQueueButton() {
     setIsShuffling(true);
     try {
       const response = await axios.get(
-        "http://backend:5000/shuffle-current-queue",
+        "http://backend:5001/shuffle-current-queue",
         { withCredentials: true }
       );
       alert(response.data.message);

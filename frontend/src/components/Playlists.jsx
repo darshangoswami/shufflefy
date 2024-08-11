@@ -13,7 +13,7 @@ function Playlists() {
 
   const fetchPlaylists = async () => {
     try {
-      const response = await axios.get("http://backend:5000/playlists");
+      const response = await axios.get("http://backend:5001/playlists");
       setPlaylists(response.data.items);
     } catch (error) {
       console.error("Error fetching playlists:", error);

@@ -21,7 +21,7 @@ function ShuffledPlaylist() {
   const fetchPlaylist = async () => {
     try {
       const response = await axios.get(
-        `http://backend:5000/playlist/${playlistId}`
+        `http://backend:5001/playlist/${playlistId}`
       );
       setTracks(response.data);
     } catch (error) {
@@ -33,7 +33,7 @@ function ShuffledPlaylist() {
     setIsShuffling(true);
     try {
       const response = await axios.get(
-        `http://backend:5000/play-with-shuffle/${playlistId}`,
+        `http://backend:5001/play-with-shuffle/${playlistId}`,
         { withCredentials: true }
       );
       alert(response.data.message);
@@ -53,7 +53,7 @@ function ShuffledPlaylist() {
   const createShuffledPlaylist = async () => {
     try {
       const response = await axios.get(
-        `http://backend:5000/create-shuffled-playlist/${playlistId}`
+        `http://backend:5001/create-shuffled-playlist/${playlistId}`
       );
       alert(
         `New shuffled playlist created with ID: ${response.data.new_playlist_id}`
