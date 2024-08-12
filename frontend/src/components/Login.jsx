@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 function Login() {
   const handleLogin = async () => {
     try {
-      const response = await axios.get("http://backend:5001/login");
+      const response = await axios.get("http://localhost:5001/login");
       window.location.href = response.data.auth_url;
     } catch (error) {
       console.error("Error during login:", error);
