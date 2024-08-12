@@ -11,19 +11,19 @@ import time
 app = Flask(__name__)
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True  # Use this in production with HTTPS
-CORS(app, resources={r"/*": {"origins": '*', "supports_credentials": True}})
+CORS(app, resources={r"/*": {"origins": 'http://localhost', "supports_credentials": True}})
 app.secret_key = APP_SECRET_KEY
 
-# def add_cors_headers(f):
-#     @wraps(f)
-#     def decorated_function(*args, **kwargs):
-#         response = make_response(f(*args, **kwargs))
-#         response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-#         response.headers.add('Access-Control-Allow-Credentials', 'true')
-#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-#         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-#         return response
-#     return decorated_function
+def add_cors_headers(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        response = make_response(f(*args, **kwargs))
+        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        return response
+    return decorated_function
 
 scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-library-read'
 
@@ -59,7 +59,7 @@ def get_playlists():
     return jsonify(playlists)
 
 @app.route('/playlist/<playlist_id>')
-# @add_cors_headers
+@add_cors_headers
 def get_playlist(playlist_id):
     tracks = get_tracks(playlist_id)
     track_list = [{'id': item['track']['id'], 'name': item['track']['name'], 'artists': [artist['name'] for artist in item['track']['artists']]} for item in tracks]
@@ -68,7 +68,7 @@ def get_playlist(playlist_id):
     return jsonify(track_list)
 
 @app.route('/create-shuffled-playlist/<playlist_id>')
-# @add_cors_headers
+@add_cors_headers
 def create_shuffled_playlist(playlist_id):
     session['token_info'], authorized = get_token()
     if not authorized:
@@ -109,7 +109,7 @@ def create_shuffled_playlist(playlist_id):
             return jsonify({"error": str(e)}), e.http_status
         
 @app.route('/shuffle-current-queue')
-# @add_cors_headers
+@add_cors_headers
 def shuffle_current_queue():
     session['token_info'], authorized = get_token()
     if not authorized:
@@ -164,7 +164,7 @@ def shuffle_current_queue():
         return jsonify({"error": str(e)}), e.http_status
     
 @app.route('/play-with-shuffle/<playlist_id>')
-# @add_cors_headers
+@add_cors_headers
 def play_with_shuffle(playlist_id):
     session['token_info'], authorized = get_token()
     if not authorized:
