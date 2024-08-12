@@ -47,7 +47,7 @@ def callback():
     session["token_info"] = token_info
     return redirect("http://localhost")
 
-@app.route('/playlists')
+@app.route('/get-playlists')
 def get_playlists():
     session['token_info'], authorized = get_token()
     session.modified = True

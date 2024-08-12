@@ -60,7 +60,7 @@ function App() {
               <div className="flex gap-2">
                 <li>
                   <Button asChild>
-                    <Link onClick={fetchPlaylists} to="/playlists">
+                    <Link onClick={fetchPlaylists} to="/">
                       Playlists
                     </Link>
                   </Button>
@@ -82,7 +82,7 @@ function App() {
 
         <Routes>
           <Route path="/" element={isLoggedIn ? <Playlists /> : <Login />} />
-          <Route path="/playlists" element={<Playlists />} />
+          {/* <Route path="/playlists" element={<Playlists />} /> */}
           <Route path="/shuffle/:playlistId" element={<ShuffledPlaylist />} />
         </Routes>
         {isLoggedIn && (
