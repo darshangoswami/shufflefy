@@ -17,7 +17,7 @@ function App() {
     // Check if the user just logged in
     const checkLoginStatus = async () => {
       try {
-        const response = await axios.get("http://localhost:5001/check-login", {
+        const response = await axios.get("/check-login", {
           withCredentials: true,
         });
         setIsLoggedIn(response.data.logged_in);
@@ -31,7 +31,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await axios.get("http://localhost:5001/logout", {
+      await axios.get("/logout", {
         withCredentials: true,
       });
       // Handle logout on the client side (e.g., clear local state, redirect)

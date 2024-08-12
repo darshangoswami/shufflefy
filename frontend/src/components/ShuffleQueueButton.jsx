@@ -8,10 +8,9 @@ function ShuffleQueueButton() {
   const handleShuffleQueue = async () => {
     setIsShuffling(true);
     try {
-      const response = await axios.get(
-        "http://localhost:5001/shuffle-current-queue",
-        { withCredentials: true }
-      );
+      const response = await axios.get("/shuffle-current-queue", {
+        withCredentials: true,
+      });
       alert(response.data.message);
       console.log(response.data);
     } catch (error) {
