@@ -1,4 +1,5 @@
 from flask import Flask, make_response, request, jsonify, session, redirect
+from flask_session import Session
 from flask_cors import CORS
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -9,10 +10,11 @@ from functools import wraps
 import time
 
 app = Flask(__name__)
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True  # Use this in production with HTTPS
+app.config['SECRET_KEY'] = APP_SECRET_KEY
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = './.flask_session/'
+Session(app)
 CORS(app, resources={r"/*": {"origins": 'http://localhost', "supports_credentials": True}})
-app.secret_key = APP_SECRET_KEY
 
 def add_cors_headers(f):
     @wraps(f)
