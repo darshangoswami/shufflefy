@@ -84,19 +84,19 @@ def get_playlist(playlist_id):
 @app.route('/create-shuffled-playlist/<playlist_id>')
 @add_cors_headers
 def create_shuffled_playlist(playlist_id):
-    session['token_info'], authorized = get_token()
-    if not authorized:
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
     
     try:
         # Get original playlist details
-        original_playlist = sp.playlist(playlist_id)
+        original_playlist = spotify.playlist(playlist_id)
         
         # Create a new playlist
-        user_id = sp.me()['id']
-        new_playlist = sp.user_playlist_create(user_id, f"Shuffled: {original_playlist['name']}")
+        user_id = spotify.me()['id']
+        new_playlist = spotify.user_playlist_create(user_id, f"Shuffled: {original_playlist['name']}")
         
         # Get all tracks from the original playlist
         tracks = get_tracks(playlist_id)
@@ -109,7 +109,7 @@ def create_shuffled_playlist(playlist_id):
         batch_size = 100  # Spotify allows up to 100 tracks per request
         for i in range(0, len(track_uris), batch_size):
             batch = track_uris[i:i+batch_size]
-            sp.user_playlist_add_tracks(user_id, new_playlist['id'], batch)
+            spotify.user_playlist_add_tracks(user_id, new_playlist['id'], batch)
             time.sleep(1)  # Add a small delay to avoid rate limiting
         
         return jsonify({"new_playlist_id": new_playlist['id']})
@@ -125,21 +125,21 @@ def create_shuffled_playlist(playlist_id):
 @app.route('/shuffle-current-queue')
 @add_cors_headers
 def shuffle_current_queue():
-    session['token_info'], authorized = get_token()
-    if not authorized:
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
     
     try:
         # Get the user's current playback state
-        playback = sp.current_playback()
+        playback = spotify.current_playback()
         if not playback:
             return jsonify({"error": "No active playback found"}), 404
         
         # Get the current queue
         if not playback['context']:
-            queue = sp.queue()
+            queue = spotify.queue()
             queue_tracks = queue['queue']
 
         elif playback['context']['type'] == "playlist":
@@ -158,7 +158,7 @@ def shuffle_current_queue():
         track_uris = [track['uri'] for track in shuffled_queue[:81]]
 
         # Start playback with the shuffled tracks
-        sp.start_playback(uris=track_uris)
+        spotify.start_playback(uris=track_uris)
 
         unique_tracks = list(set(track['id'] for track in queue_tracks))
         total_tracks = len(queue_tracks)
@@ -180,11 +180,11 @@ def shuffle_current_queue():
 @app.route('/play-with-shuffle/<playlist_id>')
 @add_cors_headers
 def play_with_shuffle(playlist_id):
-    session['token_info'], authorized = get_token()
-    if not authorized:
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
 
     try:
         tracks = get_tracks(playlist_id)
@@ -195,7 +195,7 @@ def play_with_shuffle(playlist_id):
         track_uris = [track['uri'] for track in shuffled_queue[:81]]
 
         # Start playback with the shuffled tracks
-        sp.start_playback(uris=track_uris)
+        spotify.start_playback(uris=track_uris)
         
         unique_tracks = list(set(track['id'] for track in queue_tracks))
         total_tracks = len(queue_tracks)
@@ -215,20 +215,20 @@ def play_with_shuffle(playlist_id):
         
 
 def get_tracks(playlist_id):
-    session['token_info'], authorized = get_token()
-    if not authorized:
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
 
     tracks = []
     if playlist_id == 0:
-        results = sp.current_user_saved_tracks(limit=50)
+        results = spotify.current_user_saved_tracks(limit=50)
     else:
-        results = sp.playlist_tracks(playlist_id)
+        results = spotify.playlist_tracks(playlist_id)
     tracks.extend(results['items'])
     while results['next']:
-        results = sp.next(results)
+        results = spotify.next(results)
         tracks.extend(results['items'])
 
     return tracks
