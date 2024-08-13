@@ -214,24 +214,6 @@ def play_with_shuffle(playlist_id):
         return jsonify({"error": str(e)}), e.http_status
         
 
-def get_token():
-    token_valid = False
-    token_info = session.get("token_info", {})
-
-    if not (session.get('token_info', False)):
-        token_valid = False
-        return token_info, token_valid
-
-    now = int(time.time())
-    is_token_expired = session.get('token_info').get('expires_at') - now < 60
-
-    if (is_token_expired):
-        sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
-        token_info = sp_oauth.refresh_access_token(session.get('token_info').get('refresh_token'))
-
-    token_valid = True
-    return token_info, token_valid
-
 def get_tracks(playlist_id):
     session['token_info'], authorized = get_token()
     if not authorized:
