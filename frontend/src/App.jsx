@@ -82,7 +82,7 @@ function App() {
 
         <Routes>
           <Route path="/" element={isLoggedIn ? <Playlists /> : <Login />} />
-          {/* <Route path="/playlists" element={<Playlists />} /> */}
+          <Route path="/playlists" element={<Playlists />} />
           <Route path="/shuffle/:playlistId" element={<ShuffledPlaylist />} />
         </Routes>
         {isLoggedIn && (
