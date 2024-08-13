@@ -14,8 +14,8 @@ app.config['SECRET_KEY'] = APP_SECRET_KEY
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = './.flask_session/'
 Session(app)
-CORS(app, resources={r"/*": {"origins": 'http://localhost', "supports_credentials": True}})
 
+CORS(app, resources={r"/*": {"origins": 'http://localhost', "supports_credentials": True}})
 def add_cors_headers(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -29,11 +29,26 @@ def add_cors_headers(f):
 
 scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-library-read'
 
+def get_auth_manager():
+    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+    return spotipy.oauth2.SpotifyOAuth(
+        client_id=SPOTIFY_CLIENT_ID,
+        client_secret=SPOTIFY_CLIENT_SECRET,
+        redirect_uri=SPOTIFY_REDIRECT_URI,
+        scope=scope,
+        cache_handler=cache_handler,
+        show_dialog=True
+    )
+
 @app.route('/login')
 def login():
-    sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
-    auth_url = sp_oauth.get_authorize_url()
-    return jsonify({"auth_url": auth_url})
+    auth_manager = get_auth_manager()
+    
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
+        auth_url = auth_manager.get_authorize_url()
+        return jsonify({"auth_url": auth_url})
+    
+    return jsonify({"message": "Already logged in"})
 
 @app.route('/logout')
 def logout():
@@ -42,22 +57,19 @@ def logout():
 
 @app.route('/callback')
 def callback():
-    sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
-    session.clear()
-    code = request.args.get('code')
-    token_info = sp_oauth.get_access_token(code)
-    session["token_info"] = token_info
+    auth_manager = get_auth_manager()
+    if request.args.get("code"):
+        auth_manager.get_access_token(request.args.get("code"))
     return redirect("http://localhost")
 
 @app.route('/get-playlists')
 def get_playlists():
-    session['token_info'], authorized = get_token()
-    session.modified = True
-    if not authorized:
-        return jsonify({"error": "Not authorized"})
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
+        return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
-    playlists = sp.current_user_playlists()
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
+    playlists = spotify.current_user_playlists()
     return jsonify(playlists)
 
 @app.route('/playlist/<playlist_id>')
