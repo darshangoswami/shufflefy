@@ -52,7 +52,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.clear()
+    session.pop("token_info", None)
     return jsonify({"message": "Logged out successfully"}), 200
 
 @app.route('/callback')
