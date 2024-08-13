@@ -235,8 +235,8 @@ def get_tracks(playlist_id):
 
 @app.route('/check-login')
 def check_login():
-    token_info = session.get('token_info', None)
-    if token_info:
+    auth_manager = get_auth_manager()
+    if auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({'logged_in': True})
     else:
         return jsonify({'logged_in': False})
