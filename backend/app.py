@@ -60,7 +60,7 @@ def callback():
     auth_manager = get_auth_manager()
     if request.args.get("code"):
         auth_manager.get_access_token(request.args.get("code"))
-    return redirect("http://localhost")
+    return redirect("http://localhost:8080")
 
 @app.route('/get-playlists')
 def get_playlists():
