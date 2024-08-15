@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button";
 axios.defaults.withCredentials = true;
 
 function App() {
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     // Check if the user just logged in
     const checkLoginStatus = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:5000/check-login", {
+        const response = await axios.get(apiUrl + "/check-login", {
           withCredentials: true,
         });
         setIsLoggedIn(response.data.logged_in);
@@ -31,7 +33,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await axios.get("http://127.0.0.1:5000/logout", {
+      await axios.get(apiUrl + "/logout", {
         withCredentials: true,
       });
       // Handle logout on the client side (e.g., clear local state, redirect)

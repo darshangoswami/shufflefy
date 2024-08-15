@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 axios.defaults.withCredentials = true;
 
 function ShuffledPlaylist() {
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   const [tracks, setTracks] = useState([]);
   const [isShuffling, setIsShuffling] = useState(false);
   const { playlistId } = useParams();
@@ -20,9 +22,7 @@ function ShuffledPlaylist() {
 
   const fetchPlaylist = async () => {
     try {
-      const response = await axios.get(
-        `http://127.0.0.1:5000/playlist/${playlistId}`
-      );
+      const response = await axios.get(apiUrl + `/playlist/${playlistId}`);
       setTracks(response.data);
     } catch (error) {
       console.error("Error fetching playlist:", error);
@@ -33,7 +33,7 @@ function ShuffledPlaylist() {
     setIsShuffling(true);
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/play-with-shuffle/${playlistId}`,
+        apiUrl + `/play-with-shuffle/${playlistId}`,
         { withCredentials: true }
       );
       alert(response.data.message);
@@ -53,7 +53,7 @@ function ShuffledPlaylist() {
   const createShuffledPlaylist = async () => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/create-shuffled-playlist/${playlistId}`
+        apiUrl + `/create-shuffled-playlist/${playlistId}`
       );
       alert(
         `New shuffled playlist created with ID: ${response.data.new_playlist_id}`
