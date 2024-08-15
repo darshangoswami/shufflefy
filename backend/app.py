@@ -62,7 +62,7 @@ def callback():
         auth_manager.get_access_token(request.args.get("code"))
     return redirect(FRONTEND_URL)
 
-@app.route('/get-playlists')
+@app.route('/playlists')
 def get_playlists():
     auth_manager = get_auth_manager()
     if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
