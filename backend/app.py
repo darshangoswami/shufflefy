@@ -15,7 +15,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = './.flask_session/'
 Session(app)
 
-CORS(app, resources={r"/*": {"origins": 'http://localhost', "supports_credentials": True}})
+CORS(app, resources={r"/*": {"origins": FRONTEND_URL, "supports_credentials": True}})
 def add_cors_headers(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -60,7 +60,7 @@ def callback():
     auth_manager = get_auth_manager()
     if request.args.get("code"):
         auth_manager.get_access_token(request.args.get("code"))
-    return redirect("http://localhost")
+    return redirect(FRONTEND_URL)
 
 @app.route('/get-playlists')
 def get_playlists():
