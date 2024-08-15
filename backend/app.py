@@ -1,19 +1,21 @@
 from flask import Flask, make_response, request, jsonify, session, redirect
+from flask_session import Session
 from flask_cors import CORS
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, APP_SECRET_KEY
+from config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, APP_SECRET_KEY, FRONTEND_URL
 from shuffle import fisher_yates_shuffle
 from spotipy.exceptions import SpotifyException
 from functools import wraps
 import time
 
 app = Flask(__name__)
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True  # Use this in production with HTTPS
-CORS(app, resources={r"/*": {"origins": ["http://127.0.0.1:5173", "http://localhost:5173"], "supports_credentials": True}})
-app.secret_key = APP_SECRET_KEY
+app.config['SECRET_KEY'] = APP_SECRET_KEY
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = './.flask_session/'
+Session(app)
 
+CORS(app, resources={r"/*": {"origins": 'http://localhost', "supports_credentials": True}})
 def add_cors_headers(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -27,35 +29,47 @@ def add_cors_headers(f):
 
 scope = 'playlist-read-private playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-library-read'
 
+def get_auth_manager():
+    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+    return spotipy.oauth2.SpotifyOAuth(
+        client_id=SPOTIFY_CLIENT_ID,
+        client_secret=SPOTIFY_CLIENT_SECRET,
+        redirect_uri=SPOTIFY_REDIRECT_URI,
+        scope=scope,
+        cache_handler=cache_handler,
+        show_dialog=True
+    )
+
 @app.route('/login')
 def login():
-    sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
-    auth_url = sp_oauth.get_authorize_url()
-    return jsonify({"auth_url": auth_url})
+    auth_manager = get_auth_manager()
+    
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
+        auth_url = auth_manager.get_authorize_url()
+        return jsonify({"auth_url": auth_url})
+    
+    return jsonify({"message": "Already logged in"})
 
 @app.route('/logout')
 def logout():
-    session.clear()
+    session.pop("token_info", None)
     return jsonify({"message": "Logged out successfully"}), 200
 
 @app.route('/callback')
 def callback():
-    sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
-    session.clear()
-    code = request.args.get('code')
-    token_info = sp_oauth.get_access_token(code)
-    session["token_info"] = token_info
-    return redirect('http://127.0.0.1:5173/')
+    auth_manager = get_auth_manager()
+    if request.args.get("code"):
+        auth_manager.get_access_token(request.args.get("code"))
+    return redirect("http://localhost")
 
-@app.route('/playlists')
+@app.route('/get-playlists')
 def get_playlists():
-    session['token_info'], authorized = get_token()
-    session.modified = True
-    if not authorized:
-        return jsonify({"error": "Not authorized"})
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
+        return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
-    playlists = sp.current_user_playlists()
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
+    playlists = spotify.current_user_playlists()
     return jsonify(playlists)
 
 @app.route('/playlist/<playlist_id>')
@@ -70,19 +84,19 @@ def get_playlist(playlist_id):
 @app.route('/create-shuffled-playlist/<playlist_id>')
 @add_cors_headers
 def create_shuffled_playlist(playlist_id):
-    session['token_info'], authorized = get_token()
-    if not authorized:
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
     
     try:
         # Get original playlist details
-        original_playlist = sp.playlist(playlist_id)
+        original_playlist = spotify.playlist(playlist_id)
         
         # Create a new playlist
-        user_id = sp.me()['id']
-        new_playlist = sp.user_playlist_create(user_id, f"Shuffled: {original_playlist['name']}")
+        user_id = spotify.me()['id']
+        new_playlist = spotify.user_playlist_create(user_id, f"Shuffled: {original_playlist['name']}")
         
         # Get all tracks from the original playlist
         tracks = get_tracks(playlist_id)
@@ -95,7 +109,7 @@ def create_shuffled_playlist(playlist_id):
         batch_size = 100  # Spotify allows up to 100 tracks per request
         for i in range(0, len(track_uris), batch_size):
             batch = track_uris[i:i+batch_size]
-            sp.user_playlist_add_tracks(user_id, new_playlist['id'], batch)
+            spotify.user_playlist_add_tracks(user_id, new_playlist['id'], batch)
             time.sleep(1)  # Add a small delay to avoid rate limiting
         
         return jsonify({"new_playlist_id": new_playlist['id']})
@@ -111,21 +125,21 @@ def create_shuffled_playlist(playlist_id):
 @app.route('/shuffle-current-queue')
 @add_cors_headers
 def shuffle_current_queue():
-    session['token_info'], authorized = get_token()
-    if not authorized:
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
     
     try:
         # Get the user's current playback state
-        playback = sp.current_playback()
+        playback = spotify.current_playback()
         if not playback:
             return jsonify({"error": "No active playback found"}), 404
         
         # Get the current queue
         if not playback['context']:
-            queue = sp.queue()
+            queue = spotify.queue()
             queue_tracks = queue['queue']
 
         elif playback['context']['type'] == "playlist":
@@ -144,7 +158,7 @@ def shuffle_current_queue():
         track_uris = [track['uri'] for track in shuffled_queue[:81]]
 
         # Start playback with the shuffled tracks
-        sp.start_playback(uris=track_uris)
+        spotify.start_playback(uris=track_uris)
 
         unique_tracks = list(set(track['id'] for track in queue_tracks))
         total_tracks = len(queue_tracks)
@@ -166,11 +180,11 @@ def shuffle_current_queue():
 @app.route('/play-with-shuffle/<playlist_id>')
 @add_cors_headers
 def play_with_shuffle(playlist_id):
-    session['token_info'], authorized = get_token()
-    if not authorized:
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
 
     try:
         tracks = get_tracks(playlist_id)
@@ -181,7 +195,7 @@ def play_with_shuffle(playlist_id):
         track_uris = [track['uri'] for track in shuffled_queue[:81]]
 
         # Start playback with the shuffled tracks
-        sp.start_playback(uris=track_uris)
+        spotify.start_playback(uris=track_uris)
         
         unique_tracks = list(set(track['id'] for track in queue_tracks))
         total_tracks = len(queue_tracks)
@@ -200,47 +214,29 @@ def play_with_shuffle(playlist_id):
         return jsonify({"error": str(e)}), e.http_status
         
 
-def get_token():
-    token_valid = False
-    token_info = session.get("token_info", {})
-
-    if not (session.get('token_info', False)):
-        token_valid = False
-        return token_info, token_valid
-
-    now = int(time.time())
-    is_token_expired = session.get('token_info').get('expires_at') - now < 60
-
-    if (is_token_expired):
-        sp_oauth = SpotifyOAuth(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, scope=scope)
-        token_info = sp_oauth.refresh_access_token(session.get('token_info').get('refresh_token'))
-
-    token_valid = True
-    return token_info, token_valid
-
 def get_tracks(playlist_id):
-    session['token_info'], authorized = get_token()
-    if not authorized:
+    auth_manager = get_auth_manager()
+    if not auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({"error": "Not authorized"}), 401
     
-    sp = spotipy.Spotify(auth=session.get('token_info').get('access_token'))
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
 
     tracks = []
     if playlist_id == 0:
-        results = sp.current_user_saved_tracks(limit=50)
+        results = spotify.current_user_saved_tracks(limit=50)
     else:
-        results = sp.playlist_tracks(playlist_id)
+        results = spotify.playlist_tracks(playlist_id)
     tracks.extend(results['items'])
     while results['next']:
-        results = sp.next(results)
+        results = spotify.next(results)
         tracks.extend(results['items'])
 
     return tracks
 
 @app.route('/check-login')
 def check_login():
-    token_info = session.get('token_info', None)
-    if token_info:
+    auth_manager = get_auth_manager()
+    if auth_manager.validate_token(auth_manager.cache_handler.get_cached_token()):
         return jsonify({'logged_in': True})
     else:
         return jsonify({'logged_in': False})
